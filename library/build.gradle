@@ -1,15 +1,20 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 android {
     compileSdkVersion 28
 
-
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_1_8
+    }
 
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName version
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -27,8 +32,90 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'com.android.support:appcompat-v7:28.0.0-alpha1'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    compileOnly('io.reactivex.rxjava2:rxandroid:2.0.2') {
+        exclude module: 'rxjava'
+    }
+    compileOnly 'io.reactivex.rxjava2:rxjava:2.1.12'
+    compileOnly 'com.squareup.okhttp3:okhttp:3.10.0'
+}
+
+version = "1.0.1"//定义版本标识
+
+
+def siteUrl = 'https://github.com/hmilyqin/RetrofitDownUtil'        // 修改为你的项目的主页
+def gitUrl = 'https://github.com/hmilyqin/RetrofitDownUtil.git'     // 修改为你的Git仓库的url
+group = "hmily.com.retrofitdownutil.library"                        //一般填你唯一的包名
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+//                description 'Retrofit+RxJava文件下载工具'
+                name 'DownUtil'  // 可默认，项目描述
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer { //  可默认，开发者信息
+                        id 'hmilyqin'
+                        name 'hmily'
+                        email 'hmilyqin@outlook.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+}
+
+task androidJavadocsJar(type: Jar) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+
+}
+Properties properties = new Properties()
+// 加载本地配置
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+//这个是和你bintray上面创建的package(项目)是对应的
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"  //发布到Bintray的那个仓库里，默认账户有四个库，我们这里上传到maven库
+        name = "RetrofitDownUtil"  //需更改，这个名字就是你在Bintray上创建Package的名字，这里会查询，如果此包不存在就会创建一个。
+        userOrg = 'hmily'    //组织名称 organization
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
 }
